@@ -29,16 +29,45 @@ body {
   padding: 16px;
 }
 
+/* Floating hearts container */
+.hearts {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.heart {
+  position: absolute;
+  bottom: -20px;
+  font-size: 20px;
+  animation: floatUp linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes floatUp {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(-110vh) scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Confetti canvas */
 #confettiCanvas {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
   pointer-events: none;
   z-index: 9999;
 }
 
 .card {
+  position: relative;
+  z-index: 2;
   width: min(720px, 92vw);
   padding: 26px 22px;
   background: var(--card);
@@ -51,6 +80,15 @@ body {
 h1 {
   font-size: clamp(26px, 4vw, 44px);
   margin: 12px 0 18px;
+}
+
+.glow {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%,100% { text-shadow: 0 0 5px #ff4d7d, 0 0 10px #ff4d7d; }
+  50% { text-shadow: 0 0 20px #ff1f68, 0 0 30px #ff1f68; }
 }
 
 .button-zone {
@@ -120,10 +158,11 @@ button {
 
 <body>
 
+<div class="hearts" id="heartsContainer"></div>
 <canvas id="confettiCanvas"></canvas>
 
 <main class="card">
-  <h1>Lilly will you be my Valentine? 💖</h1>
+  <h1><span class="glow">Lilly</span>, will you be my Valentine? 💖</h1>
 
   <section class="button-zone" id="zone">
     <button id="yesBtn">Yes</button>
@@ -132,11 +171,8 @@ button {
 
   <section class="result" id="result">
     <h2>YAY! 🎉</h2>
-    <p style="font-size:18px; margin-top:10px;">
-      It’s 11:11… make a wish, Lilly 💫
-    </p>
+    <p style="font-size:18px;">It’s 11:11… make a wish 💫</p>
 
-    <!-- Spotify Player (Hidden Until Yes Clicked) -->
     <div class="music" id="musicPlayer">
       <iframe
         style="border-radius:12px"
@@ -156,17 +192,25 @@ const yesBtn = document.getElementById("yesBtn");
 const noBtn = document.getElementById("noBtn");
 const result = document.getElementById("result");
 const musicPlayer = document.getElementById("musicPlayer");
+const heartsContainer = document.getElementById("heartsContainer");
 
-const confettiCanvas = document.getElementById("confettiCanvas");
+/* Create floating hearts */
+function createHeart() {
+  const heart = document.createElement("div");
+  heart.classList.add("heart");
+  heart.innerHTML = "💖";
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.animationDuration = (6 + Math.random() * 6) + "s";
+  heart.style.fontSize = (16 + Math.random() * 24) + "px";
+  heartsContainer.appendChild(heart);
 
-function resizeConfettiCanvas() {
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  confettiCanvas.width = Math.floor(window.innerWidth * dpr);
-  confettiCanvas.height = Math.floor(window.innerHeight * dpr);
+  setTimeout(() => {
+    heart.remove();
+  }, 12000);
 }
-resizeConfettiCanvas();
-window.addEventListener("resize", resizeConfettiCanvas);
 
+/* Confetti */
+const confettiCanvas = document.getElementById("confettiCanvas");
 const confettiInstance = confetti.create(confettiCanvas, {
   resize: true,
   useWorker: true
@@ -183,15 +227,6 @@ function fullScreenConfetti() {
     });
     if (Date.now() < end) requestAnimationFrame(frame);
   })();
-
-  setTimeout(() => {
-    confettiInstance({
-      particleCount: 250,
-      spread: 120,
-      startVelocity: 60,
-      origin: { x: 0.5, y: 0.6 }
-    });
-  }, 300);
 }
 
 /* YES CLICK */
@@ -200,6 +235,9 @@ yesBtn.addEventListener("click", () => {
   result.style.display = "block";
   musicPlayer.style.display = "block";
   fullScreenConfetti();
+
+  // Start floating hearts
+  setInterval(createHeart, 500);
 });
 
 /* NO BUTTON RUNS AWAY */
